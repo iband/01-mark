@@ -52,6 +52,11 @@ namespace TextProcessorTests
 		{
 			CheckTokensOutput("___some_text some___ code__and___ text", "{___some_text some___ code__and___ text}");
 		}
+		[Test]
+		public void return_escape_char_with_backslash_on_input()
+		{
+			CheckTokensOutput(@"\_text\_` \`not a code\` `", @"{_text_}[ `not a code` ]");
+		}
 
 		private void CheckTokensOutput(string input, string expectedResult)
 		{

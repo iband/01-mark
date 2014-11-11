@@ -12,17 +12,18 @@ namespace TextProcessor
 		static void Main(string[] args)
 		{
 			//var scope = "abc".Substring(1, 3);
-			//var result = Tokenizer.BuildTokens("___some_text some___ code__and___ text");
+			var result = Tokenizer.BuildTokens(@"\` `code\` `");
 			//Console.WriteLine("{0}", scope);
 		}
 	}
 	public class Tokenizer
 	{
-		static Regex _Text = new Regex(@"[^\r\n_`\\]+", RegexOptions.Compiled);
-		static Regex _Space = new Regex(@"[\s]+", RegexOptions.Compiled);
-		static Regex _NewLine = new Regex(@"[\r?\n]+", RegexOptions.Compiled);
-		static Regex _Backticks = new Regex(@"[`]+", RegexOptions.Compiled);
-		static Regex _Underscore = new Regex(@"[_]+", RegexOptions.Compiled);
+		static Regex _Text = new Regex(@"[^\r\n_`\\]", RegexOptions.Compiled);
+		static Regex _Space = new Regex(@"[\s]", RegexOptions.Compiled);
+		static Regex _NewLine = new Regex(@"[\r?\n]", RegexOptions.Compiled);
+		static Regex _Backticks = new Regex(@"[`]", RegexOptions.Compiled);
+		static Regex _Underscore = new Regex(@"[_]", RegexOptions.Compiled);
+		static Regex _Escape = new Regex(@"\\[`_\\]", RegexOptions.Compiled);
 		enum State
 		{
 			start,
@@ -42,7 +43,21 @@ namespace TextProcessor
 			{
 				var c = text[i];
 				var s = c.ToString();
-				if (specCharState == State.code && !_Backticks.IsMatch(s))
+				var tt = text.Substring(i, 2);
+				if (_Escape.IsMatch(text.Substring(i, 2)))
+				{
+					if (textState != State.text && specCharState != State.code)
+					{
+						tokens.Add('{');
+						textState = State.text;
+					}
+					if (specCharState == State.code)
+						memory.Add(text[i + 1]);
+					else 
+						tokens.Add(text[i + 1]);
+					i += 1;
+				}
+				else if (specCharState == State.code && !_Backticks.IsMatch(s))
 				{
 					memory.Add(c);
 				}
