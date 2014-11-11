@@ -20,6 +20,7 @@ namespace TextProcessor
 		static Regex _Space = new Regex(@"[\s]+", RegexOptions.Compiled);
 		static Regex _NewLine = new Regex(@"[\r?\n]+", RegexOptions.Compiled);
 		static Regex _Backticks = new Regex(@"[`]+", RegexOptions.Compiled);
+		static Regex _Underscore = new Regex(@"[_]+", RegexOptions.Compiled);
 		enum State
 		{
 			start,
@@ -38,11 +39,12 @@ namespace TextProcessor
 			{
 				var c = text[i];
 				var s = c.ToString();
-				if (specCharState == State.code && !_Backticks.IsMatch(s)) 
+				if (specCharState == State.code && !_Backticks.IsMatch(s))
 				{
 					memory.Add(c);
 				}
-				else if (_Text.IsMatch(s)) {
+				else if (_Text.IsMatch(s))
+				{
 					if (!(_Space.IsMatch(s) && specCharState == State.newLine))
 					{
 						specCharState = State.start;
@@ -84,6 +86,30 @@ namespace TextProcessor
 						memory.Add('[');
 					}
 				}
+				else if (_Underscore.IsMatch(s))
+				{
+					if (_Space.IsMatch(text[i - 1].ToString()))
+					{
+						if (i + 1 < text.Length && !_Underscore.IsMatch(text[i + 1].ToString()))
+						{
+							if (textState == State.text)
+								tokens.Add('}');
+							tokens.Add('E');
+							textState = State.start;
+						}
+					}
+					else if (_Text.IsMatch(text[i - 1].ToString()))
+					{
+						if (i + 1 < text.Length && _Space.IsMatch(text[i + 1].ToString()))
+						{
+							if (textState == State.text)
+								tokens.Add('}');
+							tokens.Add('e');
+							textState = State.start;
+						}
+					}
+				}
+				
 			}
 			if (textState == State.text)
 			{
