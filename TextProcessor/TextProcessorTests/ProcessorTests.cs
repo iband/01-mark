@@ -47,6 +47,11 @@ namespace TextProcessorTests
 		{
 			CheckTokensOutput("some text some__ code and__ text", "{some text some}s{ code and}s{ text}");
 		}
+		[Test]
+		public void return_text_tokens_when_wrong_number_of_underscores_on_input()
+		{
+			CheckTokensOutput("___some_text some___ code__and___ text", "{___some_text some___ code__and___ text}");
+		}
 
 		private void CheckTokensOutput(string input, string expectedResult)
 		{

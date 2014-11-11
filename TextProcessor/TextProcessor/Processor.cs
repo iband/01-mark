@@ -11,7 +11,9 @@ namespace TextProcessor
 	{
 		static void Main(string[] args)
 		{
-			var result = Tokenizer.BuildTokens("___some_text some___ code__and___ text");
+			//var scope = "abc".Substring(1, 3);
+			//var result = Tokenizer.BuildTokens("___some_text some___ code__and___ text");
+			//Console.WriteLine("{0}", scope);
 		}
 	}
 	public class Tokenizer
@@ -31,11 +33,12 @@ namespace TextProcessor
 
 		public static string BuildTokens(string text)
 		{
+			text = " " + text + "  ";
 			var tokens = new List<char>();
 			var memory = new List<char>();
 			State specCharState = State.start;
 			State textState = State.start;
-			for (int i = 0; i < text.Length; i++)
+			for (int i = 1; i < text.Length - 2; i++)
 			{
 				var c = text[i];
 				var s = c.ToString();
@@ -88,56 +91,46 @@ namespace TextProcessor
 				}
 				else if (_Underscore.IsMatch(s))
 				{
-					string previous = null;
-					if (i > 0)
-						previous = text[i - 1].ToString();
-					string next = null;
-					string afterNext = null;
-					if (i + 1 < text.Length)
-						next = text[i + 1].ToString();
-					if (i + 2 < text.Length)
-						afterNext = text[i + 2].ToString();
-					if (previous == null || _Space.IsMatch(previous))
+					Regex strongOpens = new Regex(@"\s__[^_\s]", RegexOptions.Compiled);
+					Regex strongCloses = new Regex(@"[^_\s]__\s", RegexOptions.Compiled);
+					Regex emOpens = new Regex(@"\s_[^_\s]+", RegexOptions.Compiled);
+					Regex emCloses = new Regex(@"[^_\s]+_\s", RegexOptions.Compiled);
+
+					var scope = text.Substring(i - 1, 4);
+					char toAdd = '\0';
+					
+					if (emOpens.IsMatch(scope))
 					{
-						if (next != null) 
-						{
-							if (!_Underscore.IsMatch(next))
-							{
-								if (textState == State.text)
-									tokens.Add('}');
-								tokens.Add('E');
-								textState = State.start;
-							}
-							else if (afterNext != null && _Underscore.IsMatch(next) && !_Underscore.IsMatch(afterNext))
-							{
-								if (textState == State.text)
-									tokens.Add('}');
-								tokens.Add('S');
-								textState = State.start;
-								i++;
-							}
-						}
+						toAdd = 'E';
 					}
-					else if (previous != null && _Text.IsMatch(previous))
+					else if (emCloses.IsMatch(scope))
 					{
-						if (next != null)
-						{
-							if (_Space.IsMatch(next))
-							{
-								if (textState == State.text)
-									tokens.Add('}');
-								tokens.Add('e');
-								textState = State.start;
-							}
-							else if (_Underscore.IsMatch(next) && _Space.IsMatch(afterNext))
-							{
-								if (textState == State.text)
-									tokens.Add('}');
-								tokens.Add('s');
-								textState = State.start;
-								i++;
-							}
-						}
+						toAdd = 'e';
+					}
+					else if (strongOpens.IsMatch(scope))
+					{
+						toAdd = 'S';
+						i++;
+					}
+					else if (strongCloses.IsMatch(scope))
+					{
+						toAdd = 's';
+						i++;
+					}
+
+					if (toAdd != '\0')
+					{
+						if (textState == State.text)
+							tokens.Add('}');
+						textState = State.start;
+						tokens.Add(toAdd);
+					}
+					else
+					{
+						if (textState != State.text)
+							tokens.Add('{');
+						textState = State.text;
+						tokens.Add(c);
 					}
 				}
 			}
