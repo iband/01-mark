@@ -11,7 +11,7 @@ namespace TextProcessor
 	{
 		static void Main(string[] args)
 		{
-			var result = Tokenizer.BuildTokens("a `cc` b");
+			var result = Tokenizer.BuildTokens("___some_text some___ code__and___ text");
 		}
 	}
 	public class Tokenizer
@@ -88,28 +88,58 @@ namespace TextProcessor
 				}
 				else if (_Underscore.IsMatch(s))
 				{
-					if (_Space.IsMatch(text[i - 1].ToString()))
+					string previous = null;
+					if (i > 0)
+						previous = text[i - 1].ToString();
+					string next = null;
+					string afterNext = null;
+					if (i + 1 < text.Length)
+						next = text[i + 1].ToString();
+					if (i + 2 < text.Length)
+						afterNext = text[i + 2].ToString();
+					if (previous == null || _Space.IsMatch(previous))
 					{
-						if (i + 1 < text.Length && !_Underscore.IsMatch(text[i + 1].ToString()))
+						if (next != null) 
 						{
-							if (textState == State.text)
-								tokens.Add('}');
-							tokens.Add('E');
-							textState = State.start;
+							if (!_Underscore.IsMatch(next))
+							{
+								if (textState == State.text)
+									tokens.Add('}');
+								tokens.Add('E');
+								textState = State.start;
+							}
+							else if (afterNext != null && _Underscore.IsMatch(next) && !_Underscore.IsMatch(afterNext))
+							{
+								if (textState == State.text)
+									tokens.Add('}');
+								tokens.Add('S');
+								textState = State.start;
+								i++;
+							}
 						}
 					}
-					else if (_Text.IsMatch(text[i - 1].ToString()))
+					else if (previous != null && _Text.IsMatch(previous))
 					{
-						if (i + 1 < text.Length && _Space.IsMatch(text[i + 1].ToString()))
+						if (next != null)
 						{
-							if (textState == State.text)
-								tokens.Add('}');
-							tokens.Add('e');
-							textState = State.start;
+							if (_Space.IsMatch(next))
+							{
+								if (textState == State.text)
+									tokens.Add('}');
+								tokens.Add('e');
+								textState = State.start;
+							}
+							else if (_Underscore.IsMatch(next) && _Space.IsMatch(afterNext))
+							{
+								if (textState == State.text)
+									tokens.Add('}');
+								tokens.Add('s');
+								textState = State.start;
+								i++;
+							}
 						}
 					}
 				}
-				
 			}
 			if (textState == State.text)
 			{

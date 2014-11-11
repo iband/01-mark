@@ -10,7 +10,7 @@ namespace TextProcessorTests
 		[Test]
 		public void return_text_tokens_with_text_on_input()
 		{
-			CheckTokensOutput("abc_d e", "{abcd e}");
+			CheckTokensOutput("abcd e", "{abcd e}");
 		}
 		[Test]
 		public void return_paragraph_tokens_with_two_newlines_on_input()
@@ -30,12 +30,22 @@ namespace TextProcessorTests
 		[Test]
 		public void return_em_opening_tokens_with_space_and_underscore_on_input()
 		{
-			CheckTokensOutput("some text _some code _and text", "{some text }E{some code }E{and text}");
+			CheckTokensOutput("_some text _some code _and text", "E{some text }E{some code }E{and text}");
 		}
 		[Test]
-		public void return_em_closing_tokens_with_underscoree_and_space_on_input()
+		public void return_em_closing_tokens_with_underscore_and_space_on_input()
 		{
 			CheckTokensOutput("some text some_ code and_ text", "{some text some}e{ code and}e{ text}");
+		}
+		[Test]
+		public void return_strong_opening_tokens_with_space_and_two_underscore_on_input()
+		{
+			CheckTokensOutput("__some text __some code __and text", "S{some text }S{some code }S{and text}");
+		}
+		[Test]
+		public void return_strong_closing_tokens_with_two_underscore_and_space_on_input()
+		{
+			CheckTokensOutput("some text some__ code and__ text", "{some text some}s{ code and}s{ text}");
 		}
 
 		private void CheckTokensOutput(string input, string expectedResult)
