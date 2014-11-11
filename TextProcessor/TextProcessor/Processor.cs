@@ -11,7 +11,7 @@ namespace TextProcessor
 	{
 		static void Main(string[] args)
 		{
-			Console.WriteLine(@"&lt;");
+			var result = Tokenizer.BuildTokens("a `cc` b");
 		}
 	}
 	public class Tokenizer
@@ -19,11 +19,13 @@ namespace TextProcessor
 		static Regex _Text = new Regex(@"[^\r\n_`\\]+", RegexOptions.Compiled);
 		static Regex _Space = new Regex(@"[\s]+", RegexOptions.Compiled);
 		static Regex _NewLine = new Regex(@"[\r?\n]+", RegexOptions.Compiled);
+		static Regex _Backticks = new Regex(@"[`]+", RegexOptions.Compiled);
 		enum State
 		{
 			start,
 			text,
-			newLine
+			newLine,
+			code
 		}
 
 		public static string BuildTokens(string text)
@@ -35,8 +37,13 @@ namespace TextProcessor
 			for (int i = 0; i < text.Length; i++)
 			{
 				var c = text[i];
-				if (_Text.IsMatch(c.ToString())) {
-					if (!(_Space.IsMatch(c.ToString()) && specCharState == State.newLine))
+				var s = c.ToString();
+				if (specCharState == State.code && !_Backticks.IsMatch(s)) 
+				{
+					memory.Add(c);
+				}
+				else if (_Text.IsMatch(s)) {
+					if (!(_Space.IsMatch(s) && specCharState == State.newLine))
 					{
 						specCharState = State.start;
 						if (textState != State.text)
@@ -47,7 +54,7 @@ namespace TextProcessor
 						tokens.Add(c);
 					}
 				}
-				else if (_NewLine.IsMatch(c.ToString()))
+				else if (_NewLine.IsMatch(s))
 				{
 					if (specCharState == State.newLine)
 					{
@@ -55,12 +62,42 @@ namespace TextProcessor
 						textState = State.start;
 						tokens.Add('P');
 						specCharState = State.start;
-					} else
+					}
+					else
 						specCharState = State.newLine;
+				}
+				else if (_Backticks.IsMatch(s))
+				{
+					if (specCharState == State.code)
+					{
+						tokens.AddRange(memory);
+						memory.Clear();
+						tokens.Add(']');
+						specCharState = State.start;
+						textState = State.start;
+					}
+					else
+					{
+						if (textState == State.text)
+							memory.Add('}');
+						specCharState = State.code;
+						memory.Add('[');
+					}
 				}
 			}
 			if (textState == State.text)
+			{
+				if (memory.Any())
+				{
+					if (specCharState == State.code)
+					{
+						memory.RemoveAt(0);
+						memory[0] = '`';
+					}
+					tokens.AddRange(memory);
+				}
 				tokens.Add('}');
+			}
 			return new string(tokens.ToArray());
 		}
 	}
