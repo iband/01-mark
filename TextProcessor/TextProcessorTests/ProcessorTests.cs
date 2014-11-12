@@ -8,64 +8,70 @@ namespace TextProcessorTests
 	public class Processor_should
 	{
 		[Test]
-		public void return_text_tokens_with_text_on_input()
+		public void return_text_on_plain_text_input()
 		{
-			CheckTokensOutput("abcd e", "{abcd e}");
+			CheckOutput("ab c d e", "ab c d e");
 		}
 		[Test]
-		public void return_paragraph_tokens_with_two_newlines_on_input()
+		public void return_code_when_any_text_between_double_backtickes_on_input()
 		{
-			CheckTokensOutput("a b d\n   \r\ntxt", "{a b d}P{txt}");
+			CheckOutput("ab `c d` ``e", "ab <code>c d</code> ``e");
 		}
 		[Test]
-		public void not_return_paragraph_tokens_when_one_newline_on_input()
+		public void return_symbol_after_escaped_one_on_input()
 		{
-			CheckTokensOutput("a b \n       d", "{a b \n       d}");
+			CheckOutput(@"ab \`c d\` \``e", "ab `c d` ``e");
 		}
 		[Test]
-		public void return_code_tokens_with_backticks_on_input()
+		public void return_text_in_paragraph_with_both_sides_double_newlines_on_input()
 		{
-			CheckTokensOutput("some text `some _code` and text", "{some text }[some _code]{ and text}");
+			CheckOutput("text \n  \r\n paragraph text \n\n end", "text <p> paragraph text </p> end");
 		}
 		[Test]
-		public void return_text_tokens_with_unpaired_backticks_on_input()
+		public void return_em_tags_with_two_underlines_from_sides_on_input()
 		{
-			CheckTokensOutput("some text `some code and text", "{some text `some code and text}");
+			CheckOutput("text _em_ text", "text <em>em</em> text");
 		}
 		[Test]
-		public void return_em_opening_tokens_with_space_and_underscore_on_input()
+		public void return_underline_when_no_closing_underline_on_input()
 		{
-			CheckTokensOutput("_some text _some code _and text", "E{some text }E{some code }E{and text}");
+			CheckOutput("text _em`_ text", "text _em`_ text");
 		}
 		[Test]
-		public void return_em_closing_tokens_with_underscore_and_space_on_input()
+		public void return_strong_tag_when_double_underline_on_input()
 		{
-			CheckTokensOutput("some text some_ code and_ text", "{some text some}e{ code and}e{ text}");
+			CheckOutput("text __strong__ text", "text <strong>strong</strong> text");
+		}
+		// Testing error cases
+		[Test]
+		public void not_return_tags_when_unbalanced_modifiers_on_input()
+		{
+			CheckOutput("__not strong_ _text__ _another_text__", "__not strong_ _text__ _another_text__");
 		}
 		[Test]
-		public void return_strong_opening_tokens_with_space_and_two_underscore_on_input()
+		public void not_return_lower_priority_tags_when_overlapse_on_input()
 		{
-			CheckTokensOutput("__some text __some code __and text", "S{some text }S{some code }S{and text}");
+			CheckOutput("text _not em because `code starts_ inside`", "text _not em because <code>code starts_ inside</code>");
 		}
 		[Test]
-		public void return_strong_closing_tokens_with_two_underscore_and_space_on_input()
+		public void not_allow_strong_tag_around_em_tag()
 		{
-			CheckTokensOutput("some text some__ code and__ text", "{some text some}s{ code and}s{ text}");
+			CheckOutput("__not strong _but em_ because of the priority__", "__not strong <em>but em</em> because of the priority__");
 		}
 		[Test]
-		public void return_text_tokens_when_wrong_number_of_underscores_on_input()
+		public void allow_em_tag_around_strong_tag()
 		{
-			CheckTokensOutput("___some_text some___ code__and___ text", "{___some_text some___ code__and___ text}");
+			CheckOutput("_em around __strong__ tag_", "<em>em around <strong>strong</strong> tag</em>");
 		}
 		[Test]
-		public void return_escape_char_with_backslash_on_input()
+		public void respect_priority_strong_in_em_in_p_tags()
 		{
-			CheckTokensOutput(@"\_text\_` \`not a code\` `", @"{_text_}[ `not a code` ]");
+			CheckOutput("\n\n new para with _em around __strong__ tag_ works correct\n\r\n", "<p> new para with <em>em around <strong>strong</strong> tag</em> works correct</p>");
 		}
 
-		private void CheckTokensOutput(string input, string expectedResult)
+		private void CheckOutput(string input, string expectedResult)
 		{
-			var output = TextProcessor.Tokenizer.BuildTokens(input);
+			var output = TextProcessor.Tokenizer.Parse(input);
 			Assert.AreEqual(expectedResult, output);
 		}
 	}
