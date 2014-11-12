@@ -70,7 +70,25 @@ namespace TextProcessor
 							output += s;
 							state = prevState;
 							break;
-						
+						case State.code:
+							var code = _Code.Match(text.Substring(i)).Groups[1];
+							if (code.Length > 0)
+							{
+								output += "<code>" + code + "</code>";
+								i += code.Length + 1;
+								state = prevState;
+								break;
+							}
+							else
+								state = State.text;
+							continue;
+						case State.newline:
+							break;
+						case State.underscore:
+							break;
+						case State.escape:
+							state = State.text;
+							break;
 						default:
 							break;
 					}
