@@ -9,11 +9,15 @@ namespace TextProcessor
 {
 	class Processor
 	{
+		static Regex _PTag = new Regex(@"\A(\r?\n +\r?\n)", RegexOptions.Compiled);
 		static void Main(string[] args)
 		{
 			//var scope = "abc".Substring(1, 3);
-			var result = Tokenizer.BuildTokens(@"\` `code\` `");
-			//Console.WriteLine("{0}", scope);
+			var result = _PTag.Match(@"
+ text 
+      
+text");
+			Console.WriteLine("{0}", result.Length);
 		}
 	}
 	public class Tokenizer
@@ -21,6 +25,7 @@ namespace TextProcessor
 		static Regex _Text = new Regex(@"[^\r\n_`\\]", RegexOptions.Compiled);
 		static Regex _Space = new Regex(@"[\s]", RegexOptions.Compiled);
 		static Regex _NewLine = new Regex(@"[\r?\n]", RegexOptions.Compiled);
+		static Regex _PTag = new Regex(@"\A(\r?\n +\r?\n)", RegexOptions.Compiled);
 		static Regex _Backticks = new Regex(@"[`]", RegexOptions.Compiled);
 		static Regex _Underscore = new Regex(@"[_]", RegexOptions.Compiled);
 		static Regex _Escape = new Regex(@"\\[`_\\]", RegexOptions.Compiled);
@@ -28,7 +33,6 @@ namespace TextProcessor
 		{
 			start,
 			text,
-			newLine,
 			code
 		}
 
@@ -43,7 +47,6 @@ namespace TextProcessor
 			{
 				var c = text[i];
 				var s = c.ToString();
-				var tt = text.Substring(i, 2);
 				if (_Escape.IsMatch(text.Substring(i, 2)))
 				{
 					if (textState != State.text && specCharState != State.code)
@@ -53,7 +56,7 @@ namespace TextProcessor
 					}
 					if (specCharState == State.code)
 						memory.Add(text[i + 1]);
-					else 
+					else
 						tokens.Add(text[i + 1]);
 					i += 1;
 				}
@@ -63,9 +66,26 @@ namespace TextProcessor
 				}
 				else if (_Text.IsMatch(s))
 				{
-					if (!(_Space.IsMatch(s) && specCharState == State.newLine))
+					specCharState = State.start;
+					if (textState != State.text)
 					{
-						specCharState = State.start;
+						tokens.Add('{');
+						textState = State.text;
+					}
+					tokens.Add(c);
+				}
+				else if (_NewLine.IsMatch(s))
+				{
+					var length = _PTag.Match(text.Substring(i)).Length;
+					if (length != 0)
+					{
+						tokens.Add('}');
+						textState = State.start;
+						tokens.Add('P');
+						i += length - 1;
+					}
+					else
+					{
 						if (textState != State.text)
 						{
 							tokens.Add('{');
@@ -73,18 +93,6 @@ namespace TextProcessor
 						}
 						tokens.Add(c);
 					}
-				}
-				else if (_NewLine.IsMatch(s))
-				{
-					if (specCharState == State.newLine)
-					{
-						tokens.Add('}');
-						textState = State.start;
-						tokens.Add('P');
-						specCharState = State.start;
-					}
-					else
-						specCharState = State.newLine;
 				}
 				else if (_Backticks.IsMatch(s))
 				{
@@ -113,7 +121,7 @@ namespace TextProcessor
 
 					var scope = text.Substring(i - 1, 4);
 					char toAdd = '\0';
-					
+
 					if (emOpens.IsMatch(scope))
 					{
 						toAdd = 'E';

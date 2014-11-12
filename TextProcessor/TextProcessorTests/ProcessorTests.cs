@@ -15,7 +15,12 @@ namespace TextProcessorTests
 		[Test]
 		public void return_paragraph_tokens_with_two_newlines_on_input()
 		{
-			CheckTokensOutput("a b \n       d\n   \r\ntxt", "{a b d}P{txt}");
+			CheckTokensOutput("a b d\n   \r\ntxt", "{a b d}P{txt}");
+		}
+		[Test]
+		public void not_return_paragraph_tokens_when_one_newline_on_input()
+		{
+			CheckTokensOutput("a b \n       d", "{a b \n       d}");
 		}
 		[Test]
 		public void return_code_tokens_with_backticks_on_input()
