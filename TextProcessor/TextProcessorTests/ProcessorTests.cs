@@ -68,6 +68,11 @@ namespace TextProcessorTests
 		{
 			CheckOutput("\n\n new para with _em around __strong__ tag_ works correct\n\r\n", "<p> new para with <em>em around <strong>strong</strong> tag</em> works correct</p>");
 		}
+		[Test]
+		public void ignore_escaped_symbols_when_checking_overlapses()
+		{
+			CheckOutput(@"_em because \`code_ __is \_mas\_ked__", "<em>em because `code</em> <strong>is _mas_ked</strong>");
+		}
 
 		private void CheckOutput(string input, string expectedResult)
 		{

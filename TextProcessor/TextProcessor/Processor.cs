@@ -11,9 +11,7 @@ namespace TextProcessor
 	{
 		static void Main(string[] args)
 		{
-			//var scope = "abc".Substring(1, 3);
-			var result = Tokenizer.Parse("text _em`_ text");
-			Console.WriteLine("{0}", result);
+
 		}
 	}
 	public class Tokenizer
@@ -27,11 +25,9 @@ namespace TextProcessor
 		static Regex _Escape = new Regex(@"\\", RegexOptions.Compiled);
 
 		static Regex _StrongOpens = new Regex(@"\s__[^_\s]", RegexOptions.Compiled);
-		//static Regex _StrongCloses = new Regex(@"[^_\s]__\s", RegexOptions.Compiled);
-		static Regex _StrongCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|_\s|\s_).)*[^_\s`]__\s", RegexOptions.Compiled);
+		static Regex _StrongCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|_\s|\s_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]__\s", RegexOptions.Compiled);
 		static Regex _EmOpens = new Regex(@"\s_[^_\s]", RegexOptions.Compiled);
-		//static Regex _EmCloses = new Regex(@"[^_\s]_\s", RegexOptions.Compiled);
-		static Regex _EmCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`).)*[^_\s`]_\s", RegexOptions.Compiled);
+		static Regex _EmCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|\s_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]_\s", RegexOptions.Compiled);
 
 		enum State
 		{
