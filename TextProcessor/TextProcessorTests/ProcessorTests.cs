@@ -10,25 +10,35 @@ namespace TextProcessorTests
 		[Test]
 		public void return_text_on_plain_text_input()
 		{
-			CheckTokensOutput("ab c d e", "ab c d e");
+			CheckOutput("ab c d e", "ab c d e");
 		}
 		[Test]
-		public void return_code_on_any_text_between_double_backtickes_input()
+		public void return_code_when_any_text_between_double_backtickes_on_input()
 		{
-			CheckTokensOutput("ab `c d` ``e", "ab <code>c d</code> ``e");
+			CheckOutput("ab `c d` ``e", "ab <code>c d</code> ``e");
 		}
 		[Test]
-		public void return_text_on_escaped_symbol_input()
+		public void return_symbol_after_escaped_one_on_input()
 		{
-			CheckTokensOutput(@"ab \`c d\` \``e", "ab `c d` ``e");
+			CheckOutput(@"ab \`c d\` \``e", "ab `c d` ``e");
 		}
 		[Test]
-		public void return_text_in_paragraph_on_both_sides_double_returns_input()
+		public void return_text_in_paragraph_with_both_sides_double_newlines_on_input()
 		{
-			CheckTokensOutput("text \n  \r\n paragraph text \n\n end", "text <p> paragraph text </p> end");
+			CheckOutput("text \n  \r\n paragraph text \n\n end", "text <p> paragraph text </p> end");
+		}
+		[Test]
+		public void return_em_tags_with_two_underlines_from_sides_on_input()
+		{
+			CheckOutput("text _em_ text", "text <em>em</em> text");
+		}
+		[Test]
+		public void return_underline_when_no_closing_underline_on_input()
+		{
+			CheckOutput("text _em`_ text`", "text _em`_ text");
 		}
 
-		private void CheckTokensOutput(string input, string expectedResult)
+		private void CheckOutput(string input, string expectedResult)
 		{
 			var output = TextProcessor.Tokenizer.Parse(input);
 			Assert.AreEqual(expectedResult, output);
