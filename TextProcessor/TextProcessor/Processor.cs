@@ -12,7 +12,7 @@ namespace TextProcessor
 		static void Main(string[] args)
 		{
 			//var scope = "abc".Substring(1, 3);
-			var result = Tokenizer.Parse("a bc");
+			var result = Tokenizer.Parse(@"ab \`c d\` \``e");
 			Console.WriteLine("{0}", result);
 		}
 	}
@@ -20,12 +20,12 @@ namespace TextProcessor
 	{
 		static Regex _Text = new Regex(@"[^\r\n_`\\]", RegexOptions.Compiled);
 		static Regex _Space = new Regex(@"\s", RegexOptions.Compiled);
-		static Regex _NewLine = new Regex(@"[\r?\n]", RegexOptions.Compiled);
-		static Regex _PTag = new Regex(@"\A(\r?\n +\r?\n)", RegexOptions.Compiled);
+		static Regex _NewLine = new Regex(@"\n", RegexOptions.Compiled);
+		static Regex _PTag = new Regex(@"\A(\n[ \r]*\n)", RegexOptions.Compiled);
 		static Regex _Backticks = new Regex(@"`", RegexOptions.Compiled);
 		static Regex _Code = new Regex(@"\A`([^`]+[^\\])`", RegexOptions.Compiled);
 		static Regex _Underscore = new Regex(@"_", RegexOptions.Compiled);
-		static Regex _Escape = new Regex(@"\\[`_\\]", RegexOptions.Compiled);
+		static Regex _Escape = new Regex(@"\\", RegexOptions.Compiled);
 		enum State
 		{
 			start,
@@ -39,12 +39,9 @@ namespace TextProcessor
 		public static string Parse(string text)
 		{
 			text = " " + text + "  ";
-			var tokens = new List<char>();
-			var memory = new List<char>();
-			State specCharState = State.start;
-			State textState = State.start;
 			State state = State.start;
 			State prevState = State.start;
+			bool isParagraph = false;
 			var output = "";
 			for (int i = 1; i < text.Length - 2; i++)
 			{
@@ -65,6 +62,8 @@ namespace TextProcessor
 								state = State.newline;
 							else if (_Underscore.IsMatch(s))
 								state = State.underscore;
+							else
+								break;
 							continue;
 						case State.text:
 							output += s;
@@ -83,7 +82,27 @@ namespace TextProcessor
 								state = State.text;
 							continue;
 						case State.newline:
-							break;
+							var paraLength = _PTag.Match(text.Substring(i)).Length;
+							if (paraLength > 0)
+							{
+								if (isParagraph)
+								{
+									output += "</p>";
+									isParagraph = false;
+								}
+								else
+								{
+									output += "<p>";
+									isParagraph = true;
+								}
+								i += paraLength - 1;
+								break;
+							}
+							else
+							{
+								state = State.text;
+								continue;
+							}
 						case State.underscore:
 							break;
 						case State.escape:
