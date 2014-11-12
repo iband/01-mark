@@ -66,7 +66,7 @@ namespace TextProcessorTests
 		[Test]
 		public void respect_priority_strong_in_em_in_p_tags()
 		{
-			CheckOutput("\n\n new para with _em around __strong__ tag_ works correct\n\r\n", "<p> new para with <em>em around <strong>strong</strong> tag</em> works correct</p>");
+			CheckOutput("\n\n_new para with em around __strong__ tag_ works correct\n\r\n", "<p><em>new para with em around <strong>strong</strong> tag</em> works correct</p>");
 		}
 		[Test]
 		public void ignore_escaped_symbols_when_checking_overlapses()

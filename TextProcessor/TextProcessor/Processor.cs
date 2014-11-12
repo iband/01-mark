@@ -42,7 +42,7 @@ namespace TextProcessor
 		static Regex _Underscore = new Regex(@"_", RegexOptions.Compiled);
 		static Regex _Escape = new Regex(@"\\", RegexOptions.Compiled);
 
-		static Regex _StrongOpens = new Regex(@"\s__[^_\s]", RegexOptions.Compiled);
+		static Regex _StrongOpens = new Regex(@"[\s]__[^_\s]", RegexOptions.Compiled);
 		static Regex _StrongCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|_\s|\s_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]__\s", RegexOptions.Compiled);
 		static Regex _EmOpens = new Regex(@"\s_[^_\s]", RegexOptions.Compiled);
 		static Regex _EmCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|\s_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]_\s", RegexOptions.Compiled);
@@ -123,6 +123,7 @@ namespace TextProcessor
 									isParagraph = true;
 								}
 								i += paraLength - 1;
+								state = State.start;
 								break;
 							}
 							else
