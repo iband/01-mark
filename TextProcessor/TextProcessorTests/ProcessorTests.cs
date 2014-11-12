@@ -42,6 +42,32 @@ namespace TextProcessorTests
 		{
 			CheckOutput("text __strong__ text", "text <strong>strong</strong> text");
 		}
+		// Testing error cases
+		[Test]
+		public void not_return_tags_when_unbalanced_modifiers_on_input()
+		{
+			CheckOutput("__not strong_ _text__ _another_text__", "__not strong_ _text__ _another_text__");
+		}
+		[Test]
+		public void not_return_lower_priority_tags_when_overlapse_on_input()
+		{
+			CheckOutput("text _not em because `code starts_ inside`", "text _not em because <code>code starts_ inside</code>");
+		}
+		[Test]
+		public void not_allow_strong_tag_around_em_tag()
+		{
+			CheckOutput("__not strong _but em_ because of the priority__", "__not strong <em>but em</em> because of the priority__");
+		}
+		[Test]
+		public void allow_em_tag_around_strong_tag()
+		{
+			CheckOutput("_em around __strong__ tag_", "<em>em around <strong>strong</strong> tag</em>");
+		}
+		[Test]
+		public void respect_priority_strong_in_em_in_p_tags()
+		{
+			CheckOutput("\n\n new para with _em around __strong__ tag_ works correct\n\r\n", "<p> new para with <em>em around <strong>strong</strong> tag</em> works correct</p>");
+		}
 
 		private void CheckOutput(string input, string expectedResult)
 		{
