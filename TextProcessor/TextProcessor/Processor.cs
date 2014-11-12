@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace TextProcessor
 {
@@ -11,7 +12,7 @@ namespace TextProcessor
 	{
 		static void Main(string[] args)
 		{
-
+			
 		}
 	}
 	public class Tokenizer
@@ -72,7 +73,10 @@ namespace TextProcessor
 								break;
 							continue;
 						case State.text:
-							output += s;
+							if (s == "<")
+								output += "&lt;";
+							else
+								output += s;
 							state = State.start;
 							break;
 						case State.code:

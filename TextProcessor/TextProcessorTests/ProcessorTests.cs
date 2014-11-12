@@ -73,6 +73,11 @@ namespace TextProcessorTests
 		{
 			CheckOutput(@"_em because \`code_ __is \_mas\_ked__", "<em>em because `code</em> <strong>is _mas_ked</strong>");
 		}
+		[Test]
+		public void wrap_existing_html_tags_into_pre_tags()
+		{
+			CheckOutput(@"<p>...</p> <code>example</code>", "&lt;p>...&lt;/p> &lt;code>example&lt;/code>");
+		}
 
 		private void CheckOutput(string input, string expectedResult)
 		{
