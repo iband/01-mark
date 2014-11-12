@@ -12,7 +12,24 @@ namespace TextProcessor
 	{
 		static void Main(string[] args)
 		{
-			
+			if (args.Length != 1)
+			{
+				Console.WriteLine("Using: {0} [inputFile]", AppDomain.CurrentDomain.FriendlyName);
+				return;
+			}
+			try
+			{
+				var text = File.ReadAllText(args[0], Encoding.UTF8);
+				var output = Tokenizer.Parse(text);
+				var html = "<!DOCTYPE html><html>" + output + "</html>";
+
+				var path = @"output.html";
+				File.WriteAllText(path, html, Encoding.UTF8);
+			}
+			catch (Exception e)
+			{
+				Console.WriteLine("Program exception: {0}", e.Message);
+			}
 		}
 	}
 	public class Tokenizer
