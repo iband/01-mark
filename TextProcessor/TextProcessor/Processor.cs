@@ -27,7 +27,8 @@ namespace TextProcessor
 		static Regex _Escape = new Regex(@"\\", RegexOptions.Compiled);
 
 		static Regex _StrongOpens = new Regex(@"\s__[^_\s]", RegexOptions.Compiled);
-		static Regex _StrongCloses = new Regex(@"[^_\s]__\s", RegexOptions.Compiled);
+		//static Regex _StrongCloses = new Regex(@"[^_\s]__\s", RegexOptions.Compiled);
+		static Regex _StrongCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|_\s|\s_).)*[^_\s`]__\s", RegexOptions.Compiled);
 		static Regex _EmOpens = new Regex(@"\s_[^_\s]", RegexOptions.Compiled);
 		//static Regex _EmCloses = new Regex(@"[^_\s]_\s", RegexOptions.Compiled);
 		static Regex _EmCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`).)*[^_\s`]_\s", RegexOptions.Compiled);
@@ -48,11 +49,10 @@ namespace TextProcessor
 		{
 			text = " " + text + "  ";
 			State state = State.start;
-			State prevState = State.start;
 			bool isParagraph = false;
 			bool isEm = false;
+			bool isStrong = false;
 			var output = "";
-			var memory = "";
 			for (int i = 1; i < text.Length - 2; i++)
 			{
 				var c = text[i];
@@ -77,7 +77,7 @@ namespace TextProcessor
 							continue;
 						case State.text:
 							output += s;
-							state = prevState;
+							state = State.start;
 							break;
 						case State.code:
 							var code = _Code.Match(text.Substring(i)).Groups[1];
@@ -85,7 +85,7 @@ namespace TextProcessor
 							{
 								output += "<code>" + code + "</code>";
 								i += code.Length + 1;
-								state = prevState;
+								state = State.start;
 								break;
 							}
 							else
@@ -114,10 +114,16 @@ namespace TextProcessor
 								continue;
 							}
 						case State.undeline:
-							var scope = text.Substring(i - 1, 3);
+							if (text[i + 1] == '_')
+								state = State.strong;
+							else
+								state = State.em;
+							continue;
+						case State.em:
+							var emRange = text.Substring(i - 1, 3);
 							if (isEm)
 							{
-								if (_EmCloses.IsMatch(scope))
+								if (_EmCloses.IsMatch(emRange))
 								{
 									output += "</em>";
 									isEm = false;
@@ -125,8 +131,7 @@ namespace TextProcessor
 							}
 							else
 							{
-								var a = _EmCloses.IsMatch(text.Substring(i + 1));
-								if (_EmOpens.IsMatch(scope) && _EmCloses.IsMatch(text.Substring(i + 1)))
+								if (_EmOpens.IsMatch(emRange) && _EmCloses.IsMatch(text.Substring(i + 1)))
 								{
 									output += "<em>";
 									isEm = true;
@@ -139,10 +144,33 @@ namespace TextProcessor
 							}
 							state = State.text;
 							break;
-						case State.em:
-
 						case State.strong:
-
+							var strongRange = text.Substring(i - 1, 4);
+							if (isStrong)
+							{
+								if (_StrongCloses.IsMatch(strongRange))
+								{
+									output += "</strong>";
+									isStrong = false;
+									i++;
+								}
+							}
+							else
+							{
+								if (_StrongOpens.IsMatch(strongRange) && _StrongCloses.IsMatch(text.Substring(i + 1)))
+								{
+									output += "<strong>";
+									isStrong = true;
+									i++;
+								}
+								else
+								{
+									state = State.text;
+									continue;
+								}
+							}
+							state = State.text;
+							break;
 						case State.escape:
 							state = State.text;
 							break;

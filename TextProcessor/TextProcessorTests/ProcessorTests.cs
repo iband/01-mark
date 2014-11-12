@@ -35,7 +35,12 @@ namespace TextProcessorTests
 		[Test]
 		public void return_underline_when_no_closing_underline_on_input()
 		{
-			CheckOutput("text _em`_ text`", "text _em`_ text");
+			CheckOutput("text _em`_ text", "text _em`_ text");
+		}
+		[Test]
+		public void return_strong_tag_when_double_underline_on_input()
+		{
+			CheckOutput("text __strong__ text", "text <strong>strong</strong> text");
 		}
 
 		private void CheckOutput(string input, string expectedResult)
