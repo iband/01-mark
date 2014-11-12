@@ -42,10 +42,10 @@ namespace TextProcessor
 		static Regex _Underscore = new Regex(@"_", RegexOptions.Compiled);
 		static Regex _Escape = new Regex(@"\\", RegexOptions.Compiled);
 
-		static Regex _StrongOpens = new Regex(@"[\s]__[^_\s]", RegexOptions.Compiled);
-		static Regex _StrongCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|_\s|\s_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]__\s", RegexOptions.Compiled);
-		static Regex _EmOpens = new Regex(@"\s_[^_\s]", RegexOptions.Compiled);
-		static Regex _EmCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|\s_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]_\s", RegexOptions.Compiled);
+		static Regex _StrongOpens = new Regex(@"[^\w]__[^_]", RegexOptions.Compiled);
+		static Regex _StrongCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|_[^\w\\]|[^\w\\]_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]__[^\w]", RegexOptions.Compiled);
+		static Regex _EmOpens = new Regex(@"[^\w]_[^_]", RegexOptions.Compiled);
+		static Regex _EmCloses = new Regex(@"(?s)^((?!\n[ ]*\r?\n|`|[^\w\\]_[^_\r?\n`\\]).|(\\[`\n]))*[^_\s`]_[^\w]", RegexOptions.Compiled);
 
 		enum State
 		{
@@ -175,7 +175,7 @@ namespace TextProcessor
 							}
 							else
 							{
-								if (_StrongOpens.IsMatch(strongRange) && _StrongCloses.IsMatch(text.Substring(i + 1)))
+								if (_StrongOpens.IsMatch(strongRange) && _StrongCloses.IsMatch(text.Substring(i + 2)))
 								{
 									output += "<strong>";
 									isStrong = true;
