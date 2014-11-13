@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Security;
 using System.IO;
 
 namespace TextProcessor
@@ -20,6 +21,7 @@ namespace TextProcessor
 			try
 			{
 				var text = File.ReadAllText(args[0], Encoding.UTF8);
+				text = SecurityElement.Escape(text);
 				var output = Tokenizer.Parse(text);
 				var html = "<!DOCTYPE html><html>" + output + "</html>";
 
@@ -39,7 +41,7 @@ namespace TextProcessor
 		static Regex _PTag = new Regex(@"\A(\n[ \r]*\n)", RegexOptions.Compiled);
 		static Regex _Backticks = new Regex(@"`", RegexOptions.Compiled);
 		static Regex _Code = new Regex(@"\A`([^`]+[^\\])`", RegexOptions.Compiled);
-		static Regex _Underscore = new Regex(@"_", RegexOptions.Compiled);
+		static Regex _Underline = new Regex(@"_", RegexOptions.Compiled);
 		static Regex _Escape = new Regex(@"\\", RegexOptions.Compiled);
 
 		static Regex _StrongOpens = new Regex(@"[^\w]__[^_]", RegexOptions.Compiled);
@@ -61,21 +63,25 @@ namespace TextProcessor
 
 		public static string Parse(string text)
 		{
-			text = " " + text + "  ";
 			State state = State.start;
 			bool isParagraph = false;
 			bool isEm = false;
 			bool isStrong = false;
+			text = " " + text + "  ";
 			var output = "";
 			for (int i = 1; i < text.Length - 2; i++)
 			{
-				var c = text[i];
-				var s = c.ToString();
+				var s = text[i].ToString();
 				while (true)
 				{
 					switch (state)
 					{
 						case State.start:
+							if (isParagraph == false)
+							{
+								output += "<p>";
+								isParagraph = true;
+							}
 							if (_Escape.IsMatch(s))
 								state = State.escape;
 							else if (_Text.IsMatch(s))
@@ -84,16 +90,13 @@ namespace TextProcessor
 								state = State.code;
 							else if (_NewLine.IsMatch(s))
 								state = State.newline;
-							else if (_Underscore.IsMatch(s))
+							else if (_Underline.IsMatch(s))
 								state = State.undeline;
 							else
 								break;
 							continue;
 						case State.text:
-							if (s == "<")
-								output += "&lt;";
-							else
-								output += s;
+							output += s;
 							state = State.start;
 							break;
 						case State.code:

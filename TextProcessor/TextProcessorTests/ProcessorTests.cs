@@ -25,7 +25,7 @@ namespace TextProcessorTests
 		[Test]
 		public void return_text_in_paragraph_with_both_sides_double_newlines_on_input()
 		{
-			CheckOutput("text \n  \r\n paragraph text \n\n end", "text <p> paragraph text </p> end");
+			CheckOutput("text \n  \r\n paragraph text \n\n end", "<p>text </p><p> paragraph text </p><p> end</p>", false);
 		}
 		[Test]
 		public void return_em_tags_with_two_underlines_from_sides_on_input()
@@ -46,7 +46,7 @@ namespace TextProcessorTests
 		[Test]
 		public void not_return_tags_when_unbalanced_modifiers_on_input()
 		{
-			CheckOutput("__not strong_ _text__ _another_text__", "__not strong_ _text__ _another_text__");
+			CheckOutput("__strong_ _text__ _another_text__", "<strong>strong_ _text</strong> _another_text__");
 		}
 		[Test]
 		public void not_return_lower_priority_tags_when_overlapse_on_input()
@@ -66,22 +66,19 @@ namespace TextProcessorTests
 		[Test]
 		public void respect_priority_strong_in_em_in_p_tags()
 		{
-			CheckOutput("\n\n_new para with em around __strong__ tag_ works correct\n\r\n", "<p><em>new para with em around <strong>strong</strong> tag</em> works correct</p>");
+			CheckOutput("\n\n_new para with em around __strong__ tag_ works correct\n\r\n", "<p></p><p><em>new para with em around <strong>strong</strong> tag</em> works correct</p>", false);
 		}
 		[Test]
 		public void ignore_escaped_symbols_when_checking_overlapses()
 		{
 			CheckOutput(@"_em because \`code_ __is \_mas\_ked__", "<em>em because `code</em> <strong>is _mas_ked</strong>");
 		}
-		[Test]
-		public void wrap_existing_html_tags_into_pre_tags()
-		{
-			CheckOutput(@"<p>...</p> <code>example</code>", "&lt;p>...&lt;/p> &lt;code>example&lt;/code>");
-		}
 
-		private void CheckOutput(string input, string expectedResult)
+		private void CheckOutput(string input, string expectedResult, bool para = true)
 		{
 			var output = TextProcessor.Tokenizer.Parse(input);
+			if (para == true)
+				expectedResult = "<p>" + expectedResult + "</p>";
 			Assert.AreEqual(expectedResult, output);
 		}
 	}
