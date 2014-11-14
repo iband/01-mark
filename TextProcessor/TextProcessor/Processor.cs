@@ -23,8 +23,9 @@ namespace TextProcessor
 				var text = File.ReadAllText(args[0], Encoding.UTF8);
 				text = SecurityElement.Escape(text);
 				var output = Tokenizer.Parse(text);
-				var html = "<!DOCTYPE html><html>" + output + "</html>";
-
+				var header = "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"></head>";
+				var html = "<!DOCTYPE html><html>" + header + "<body>" + output + "</body></html>";
+				
 				var path = @"output.html";
 				File.WriteAllText(path, html, Encoding.UTF8);
 			}
